@@ -1,0 +1,38 @@
+backend/
+├── src/
+│   ├── main.ts                         # Entry point của ứng dụng
+│   ├── app.module.ts                   # Root module
+│   │
+│   ├── config/                         # Configuration files
+│   │   ├── database.config.ts          # MongoDB configuration
+│   │   ├── redis.config.ts             # Redis configuration
+│   │   └── ai.config.ts                # AI providers configuration
+│   │
+│   ├── common/                         # Shared resources
+│   │   └── enums/
+│   │       └── index.ts                # All enums (UserRole, TargetBand, SubmissionStatus, etc.)
+│   │
+│   └── schemas/                        # MongoDB Schemas
+│       ├── index.ts                    # Export all schemas
+│       │
+│       ├── user.schema.ts              # Core: User schema
+│       ├── topic.schema.ts             # Core: Topic schema
+│       │
+│       ├── course.schema.ts            # Module 1: Course schema
+│       ├── lesson.schema.ts            # Module 1: Lesson schema (with embedded videos, vocabularies, grammars)
+│       │
+│       ├── sample-essay.schema.ts      # Module 2: SampleEssay schema (with highlight annotations)
+│       ├── favorite-essay.schema.ts    # Module 2: FavoriteEssay schema
+│       │
+│       ├── notebook-note.schema.ts     # Module 3: NotebookNote schema
+│       ├── flashcard-set.schema.ts     # Module 3: FlashcardSet schema (with embedded flashcards)
+│       │
+│       ├── exam-question.schema.ts     # Module 4: ExamQuestion schema
+│       └── submission.schema.ts        # Module 4: Submission schema (with AI result)
+│
+├── package.json                        # Dependencies & scripts
+├── tsconfig.json                       # TypeScript configuration
+├── nest-cli.json                       # NestJS CLI configuration
+├── .env.example                        # Environment variables template
+├── .gitignore                          # Git ignore rules
+└── README.md                           # Documentation
