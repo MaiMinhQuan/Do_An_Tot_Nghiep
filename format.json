@@ -1,0 +1,39 @@
+{
+  "taskResponseScore": 7.0,
+  "coherenceScore": 7.5,
+  "lexicalScore": 6.5,
+  "grammarScore": 6.0,
+  "overallBand": 6.75,
+  "errors": [
+    {
+      "startIndex": 0,
+      "endIndex": 93,
+      "category": "GRAMMAR",
+      "originalText": "With the increase in technology on a daily basis, the production has transformed drastically.",
+      "suggestion": "With the daily increase in technology, production has undergone a drastic transformation.",
+      "explanation": "Câu bị sai về mặt ngữ pháp và cấu trúc câu. Câu sửa lại giúp cải thiện tính mạch lạc và rõ ràng.",
+      "severity": "medium"
+    },
+    {
+      "startIndex": 728,
+      "endIndex": 739,
+      "category": "VOCABULARY",
+      "originalText": "menial jobs",
+      "suggestion": "manual labor",
+      "explanation": "Từ 'menial' không phù hợp trong ngữ cảnh này. 'Manual labor' là lựa chọn từ vựng tốt hơn để mô tả công việc thủ công.",
+      "severity": "low"
+    },
+    {
+      "startIndex": 1003,
+      "endIndex": 1046,
+      "category": "GRAMMAR",
+      "originalText": "it needs the staff to be trained to operate",
+      "suggestion": "it requires staff to be trained to operate",
+      "explanation": "Câu bị sai về mặt ngữ pháp. Sử dụng 'requires' thay cho 'needs' giúp câu trở nên chính xác và tự nhiên hơn.",
+      "severity": "medium"
+    }
+  ],
+  "generalFeedback": "Bài viết có cấu trúc rõ ràng và đề cập đến các điểm chính của đề bài. Tuy nhiên, vẫn cần cải thiện về mặt ngữ pháp, từ vựng và tính mạch lạc.",
+  "strengths": "Bài viết có khả năng đưa ra các ví dụ cụ thể và thảo luận về các khía cạnh khác nhau của vấn đề.",
+  "improvements": "Cần cải thiện về mặt ngữ pháp, từ vựng và cấu trúc câu để tăng tính mạch lạc và rõ ràng. Ngoài ra, nên thêm các ví dụ và lập luận cụ thể hơn để hỗ trợ cho các điểm được đề cập."
+}

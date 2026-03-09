@@ -1,0 +1,324 @@
+═══════════════════════════════════════════════════════════════════════════
+  📚 HƯỚNG DẪN SỬ DỤNG - IELTS Dataset Generator với Groq API
+═══════════════════════════════════════════════════════════════════════════
+
+🎯 MỤC ĐÍCH
+-----------
+Script `create_dataset_groq.py` tạo dataset fine-tuning JSONL từ CSV bằng:
+1. Gọi Groq API (Llama 3.3) để chấm bài IELTS
+2. Post-process FIX TỌA ĐỘ ký tự (startIndex/endIndex) bằng Python
+3. Lưu format ChatML chuẩn cho fine-tuning Mistral/Llama
+
+
+🔧 SETUP
+--------
+
+Bước 1: Cài đặt dependencies
+```bash
+pip install -r requirements-dataset.txt
+```
+
+Bước 2: Set Groq API Key
+```bash
+# Linux/Mac
+export GROQ_API_KEY='your_groq_api_key_here'
+
+# Windows PowerShell
+$env:GROQ_API_KEY='your_groq_api_key_here'
+
+# Windows CMD
+set GROQ_API_KEY=your_groq_api_key_here
+```
+
+💡 Lấy API Key: https://console.groq.com/keys
+
+
+📂 CHUẨN BỊ DATA
+----------------
+
+File input: `train_dataset.csv`
+
+Format CSV:
+```csv
+prompt,essay
+"Some people believe that...",In recent years technology has...
+"Discuss both views...",There are different opinions about...
+```
+
+✅ Yêu cầu:
+- 2 cột bắt buộc: `prompt`, `essay`
+- Encoding: UTF-8
+- Không giới hạn số dòng (script chạy theo batch)
+
+
+⚙️ CẤU HÌNH BATCH
+------------------
+
+Mở file `create_dataset_groq.py`, tìm phần:
+
+```python
+# Batch Configuration
+START_INDEX = 0      # Dòng bắt đầu (0-indexed)
+END_INDEX = 10       # Dòng kết thúc (exclusive)
+```
+
+Ví dụ:
+- Chạy 10 dòng đầu: START_INDEX=0, END_INDEX=10
+- Chạy dòng 10-20: START_INDEX=10, END_INDEX=20
+- Chạy dòng 50-100: START_INDEX=50, END_INDEX=100
+
+💡 Tips: Chạy batch nhỏ (10-20 dòng) để test trước!
+
+
+🚀 CHẠY SCRIPT
+--------------
+
+```bash
+python create_dataset_groq.py
+```
+
+
+📊 OUTPUT
+---------
+
+File: `dataset_batch_{START}_to_{END}_fixed.jsonl`
+
+Format mỗi dòng (ChatML):
+```json
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "Bạn là một giám khảo IELTS Writing..."
+    },
+    {
+      "role": "user",
+      "content": "ĐỀ BÀI:\n...\n\nBÀI VIẾT CỦA HỌC VIÊN:\n..."
+    },
+    {
+      "role": "assistant",
+      "content": "{\"taskResponseScore\": 6.5, \"errors\": [...]}"
+    }
+  ]
+}
+```
+
+
+🎯 CƠ CHẾ HYBRID (QUAN TRỌNG)
+-------------------------------
+
+LLM RẤT KÉM trong việc đếm index ký tự. Do đó:
+
+1️⃣ LLM chỉ có nhiệm vụ:
+   - Phát hiện lỗi
+   - Trích xuất CHÍNH XÁC cụm từ sai (`originalText`)
+   - Không cần tính startIndex/endIndex đúng (AI cứ điền 0)
+
+2️⃣ Python post-process:
+   - Hàm `post_process_coordinates()`
+   - Dùng `essay.find(originalText)` để tìm vị trí thực
+   - Ghi đè startIndex và endIndex CHÍNH XÁC
+   - Loại bỏ hallucination (text AI bịa không có trong bài)
+
+✅ Kết quả: Tọa độ 100% chính xác!
+
+
+⚡ RATE LIMITING
+----------------
+
+Script tự động:
+- Sleep 2.5s giữa mỗi request
+- Tránh hit rate limit của Groq
+
+Groq Free Tier limits:
+- 30 requests/minute
+- 14,400 tokens/minute
+
+💡 Với sleep 2.5s → ~24 requests/minute → An toàn!
+
+
+🐛 TROUBLESHOOTING
+------------------
+
+❌ Error: "GROQ_API_KEY environment variable not set!"
+✅ Fix: Set environment variable (xem phần SETUP)
+
+❌ Error: "Input file 'train_dataset.csv' not found!"
+✅ Fix: Đặt file CSV cùng thư mục với script
+
+❌ Error: "CSV must have 'prompt' and 'essay' columns!"
+✅ Fix: Kiểm tra tên cột trong CSV
+
+❌ Warning: "Skipped hallucination: '...'"
+✅ OK: Script tự động loại bỏ lỗi AI bịa ra
+
+❌ Error: "JSON Decode Error"
+✅ Fix:
+   - Kiểm tra response_format={"type": "json_object"}
+   - Có thể do prompt quá dài, giảm END_INDEX
+
+
+📈 MONITORING
+-------------
+
+Trong quá trình chạy, bạn sẽ thấy:
+
+```
+📝 Row 5/10: Processing...
+   Prompt: Some people believe that...
+   Essay length: 1247 chars
+🔧 Post-processing coordinates...
+   ✅ Fixed 8 errors
+   ⚠️  Removed 2 hallucinated errors
+   ✅ Row 5 completed successfully
+   ⏳ Sleeping 2.5s to avoid rate limit...
+```
+
+Thông tin:
+- Fixed X errors: Số lỗi có tọa độ chính xác
+- Removed X hallucinated: Số lỗi AI bịa (đã loại bỏ)
+
+
+🧪 VALIDATION
+-------------
+
+Sau khi chạy xong, validate output:
+
+```python
+import json
+
+# Đọc file JSONL
+with open('dataset_batch_0_to_10_fixed.jsonl', 'r') as f:
+    for line in f:
+        data = json.loads(line)
+
+        # Lấy assistant response
+        ai_json = json.loads(data['messages'][2]['content'])
+
+        # Check scores
+        print(f"Band: {ai_json['overallBand']}")
+
+        # Check coordinates
+        for error in ai_json['errors']:
+            start = error['startIndex']
+            end = error['endIndex']
+            original = error['originalText']
+
+            # Verify coordinates (nếu có essay text)
+            # essay = data['messages'][1]['content'].split('BÀI VIẾT:')[1]
+            # assert essay[start:end] == original
+
+            print(f"  [{start}:{end}] {original}")
+```
+
+
+🎓 FINE-TUNING (BƯỚC TIẾP THEO)
+--------------------------------
+
+Sau khi có file JSONL:
+
+Option 1: Fine-tune với OpenAI API
+```bash
+openai api fine_tunes.create \
+  -t dataset_batch_0_to_100_fixed.jsonl \
+  -m gpt-3.5-turbo
+```
+
+Option 2: Fine-tune Mistral/Llama locally
+```bash
+# Dùng Axolotl hoặc Unsloth
+python -m axolotl.cli.train config.yml
+```
+
+Option 3: Fine-tune trên cloud (Runpod, Vast.ai)
+
+
+💾 MERGE BATCHES
+----------------
+
+Nếu chạy nhiều batch, merge lại:
+
+```bash
+# Linux/Mac
+cat dataset_batch_0_to_50_fixed.jsonl \
+    dataset_batch_50_to_100_fixed.jsonl \
+    > dataset_full.jsonl
+
+# Windows PowerShell
+Get-Content dataset_batch_*.jsonl | Set-Content dataset_full.jsonl
+```
+
+
+📊 STATISTICS
+-------------
+
+Xem thống kê dataset:
+
+```python
+import json
+import pandas as pd
+
+data = []
+with open('dataset_batch_0_to_10_fixed.jsonl', 'r') as f:
+    for line in f:
+        msg = json.loads(line)
+        ai = json.loads(msg['messages'][2]['content'])
+        data.append({
+            'band': ai['overallBand'],
+            'num_errors': len(ai['errors']),
+            'has_feedback': bool(ai.get('generalFeedback'))
+        })
+
+df = pd.DataFrame(data)
+print(df.describe())
+print("\nBand distribution:")
+print(df['band'].value_counts().sort_index())
+```
+
+
+🔄 INCREMENTAL GENERATION
+--------------------------
+
+Để tạo dataset lớn (1000+ samples):
+
+```bash
+# Batch 1: 0-50
+python create_dataset_groq.py  # Set START=0, END=50
+
+# Batch 2: 50-100
+# Sửa script: START=50, END=100
+python create_dataset_groq.py
+
+# Batch 3: 100-150
+# Sửa script: START=100, END=150
+python create_dataset_groq.py
+
+# Merge tất cả
+cat dataset_batch_*_fixed.jsonl > dataset_full.jsonl
+```
+
+
+⚠️ QUAN TRỌNG
+--------------
+
+1. ✅ LUÔN TEST với batch nhỏ (5-10 dòng) trước
+2. ✅ CHECK output JSONL sau mỗi batch
+3. ✅ BACKUP file CSV gốc
+4. ✅ Monitor Groq API usage: https://console.groq.com/usage
+5. ✅ Groq Free Tier có giới hạn, nâng cấp nếu cần
+
+
+📧 SUPPORT
+----------
+
+Questions?
+- Check script comments (có giải thích chi tiết từng bước)
+- Review AI_OUTPUT_FORMAT.md để hiểu output format
+- Test với mockup data trước khi chạy full dataset
+
+
+═══════════════════════════════════════════════════════════════════════════
+Version: 1.0
+Last Updated: March 12, 2026
+Project: IELTS Writing E-Learning Platform
+═══════════════════════════════════════════════════════════════════════════

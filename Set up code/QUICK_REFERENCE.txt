@@ -1,0 +1,251 @@
+┌─────────────────────────────────────────────────────────────────────┐
+│  🚀 QUICK REFERENCE - GEMINI AI OUTPUT FORMAT                       │
+└─────────────────────────────────────────────────────────────────────┘
+
+📋 FILES CREATED:
+├── AI_OUTPUT_FORMAT.md          → Full specification document
+├── GEMINI_PROMPT_TEMPLATE.txt   → Copy-paste template cho Gemini
+├── test-ai-output.js            → Validation test script
+└── QUICK_REFERENCE.txt          → This file
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  ✅ CORRECT FORMAT (COPY THIS TO GEMINI)                            │
+└─────────────────────────────────────────────────────────────────────┘
+
+{
+  "taskResponseScore": 6.5,           ← NUMBER, 0-9, step 0.5
+  "coherenceScore": 6.0,              ← NUMBER, 0-9, step 0.5
+  "lexicalScore": 6.5,                ← NUMBER, 0-9, step 0.5
+  "grammarScore": 6.0,                ← NUMBER, 0-9, step 0.5
+  "overallBand": 6.0,                 ← NUMBER, 0-9, step 0.5
+  "errors": [
+    {
+      "startIndex": 45,               ← Integer >= 0
+      "endIndex": 64,                 ← Integer > startIndex
+      "category": "GRAMMAR",          ← UPPERCASE enum
+      "originalText": "...",          ← String from essay
+      "suggestion": "...",            ← String correction
+      "explanation": "...",           ← String (Vietnamese)
+      "severity": "medium"            ← lowercase: low|medium|high
+    }
+  ],
+  "generalFeedback": "...",           ← String (Vietnamese)
+  "strengths": "...",                 ← String (Vietnamese)
+  "improvements": "..."               ← String (Vietnamese)
+}
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  🎯 ENUM VALUES                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+category (UPPERCASE):
+  ✅ GRAMMAR          - Ngữ pháp
+  ✅ VOCABULARY       - Từ vựng
+  ✅ COHERENCE        - Mạch lạc
+  ✅ TASK_RESPONSE    - Trả lời đề
+  ✅ SPELLING         - Chính tả
+  ✅ PUNCTUATION      - Dấu câu
+
+severity (lowercase):
+  ✅ low              - Lỗi nhỏ
+  ✅ medium           - Lỗi trung bình
+  ✅ high             - Lỗi nghiêm trọng
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  ❌ COMMON MISTAKES                                                  │
+└─────────────────────────────────────────────────────────────────────┘
+
+"taskResponseScore": "6.5"       ❌ String → ✅ 6.5 (number)
+"taskResponseScore": 6.75        ❌ Wrong step → ✅ 6.5 or 7.0
+"category": "grammar"            ❌ Lowercase → ✅ "GRAMMAR"
+"severity": "MEDIUM"             ❌ Uppercase → ✅ "medium"
+endIndex: 10, startIndex: 20     ❌ Wrong order → ✅ Must be >
+"explanation": "Wrong verb"      ❌ English → ✅ Vietnamese
+
+Nested structure:                ❌ WRONG FORMAT
+{
+  "scores": { ... },             ← Don't nest!
+  "feedback": { ... }            ← Must be flat!
+}
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  🔧 WORKFLOW                                                         │
+└─────────────────────────────────────────────────────────────────────┘
+
+1. Mở file: GEMINI_PROMPT_TEMPLATE.txt
+   → Copy toàn bộ prompt
+
+2. Paste vào Gemini AI
+   → Thay {PASTE_QUESTION_HERE} bằng đề bài
+   → Thay {PASTE_ESSAY_HERE} bằng bài viết học viên
+
+3. Gemini trả về JSON
+   → Copy JSON response
+
+4. Test validation:
+   node test-ai-output.js
+   → Paste JSON vào biến mockGeminiOutput
+   → Xem kết quả validation
+
+5. Nếu có lỗi:
+   → Sửa prompt theo errors
+   → Retry với Gemini
+   → Test lại
+
+6. Khi validation pass:
+   → Integrate vào backend AI service
+   → Save to database
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  💻 TEST COMMAND                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+# Test validation script
+node test-ai-output.js
+
+# Expected output:
+# ✅ VALIDATION THÀNH CÔNG - Output hợp lệ!
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  📚 SCORE RANGES                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+0.0 - 4.0    │ Below average
+4.5 - 5.5    │ Modest user
+6.0 - 6.5    │ Competent user  ← Most common
+7.0 - 7.5    │ Good user
+8.0 - 8.5    │ Very good user
+9.0          │ Expert user
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  🔍 CHARACTER INDEX EXAMPLE                                          │
+└─────────────────────────────────────────────────────────────────────┘
+
+const essay = "Technology is changing the world.";
+               0123456789...
+
+Word          │ startIndex │ endIndex
+─────────────┼────────────┼──────────
+"Technology"  │     0      │    10
+"is"          │    11      │    13
+"changing"    │    14      │    22
+"the"         │    23      │    26
+"world"       │    27      │    32
+
+Rule: endIndex = position AFTER last character
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  🎓 SEVERITY GUIDELINES                                              │
+└─────────────────────────────────────────────────────────────────────┘
+
+high:
+  • Subject-verb agreement errors
+  • Wrong tense usage
+  • Spelling of common words
+  • Not answering the question
+
+medium:
+  • Preposition errors
+  • Article errors (a/an/the)
+  • Word choice issues
+  • Inappropriate linking words
+
+low:
+  • Simple word instead of academic
+  • Minor punctuation
+  • Word repetition
+  • Informal expressions
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  📝 FEEDBACK TIPS (VIETNAMESE)                                       │
+└─────────────────────────────────────────────────────────────────────┘
+
+generalFeedback (100-200 words):
+  → Nhận xét tổng quan
+  → Đề cập yêu cầu đề bài
+  → Điểm mạnh và yếu chính
+
+strengths (50-100 words):
+  → Liệt kê cụ thể
+  → Ví dụ: "Sử dụng linking words tốt như 'Moreover'"
+  → Ví dụ: "Từ vựng phong phú: 'mitigate', 'substantial'"
+
+improvements (50-100 words):
+  → Gợi ý cải thiện cụ thể
+  → Ví dụ: "Cần luyện câu điều kiện loại 2"
+  → Ví dụ: "Tránh lặp từ 'many', dùng 'numerous'"
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  🚨 TROUBLESHOOTING                                                  │
+└─────────────────────────────────────────────────────────────────────┘
+
+Problem: Gemini trả về markdown ```json { ... } ```
+Solution: Nhắc "Chỉ trả về pure JSON, không markdown"
+
+Problem: Scores là string "6.5" thay vì number
+Solution: Nhắc "Tất cả scores phải là NUMBER không phải string"
+
+Problem: category là "grammar" (lowercase)
+Solution: Nhắc "category phải UPPERCASE: GRAMMAR"
+
+Problem: severity là "MEDIUM" (uppercase)
+Solution: Nhắc "severity phải lowercase: medium"
+
+Problem: Gemini trả về nested {scores: {}, feedback: {}}
+Solution: Dùng transformNestedToFlat() trong test-ai-output.js
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  💡 PRO TIPS                                                         │
+└─────────────────────────────────────────────────────────────────────┘
+
+1. Test với nhiều loại bài viết:
+   • Band 5.0 (nhiều lỗi)
+   • Band 6.5 (trung bình)
+   • Band 8.0 (tốt)
+
+2. Kiểm tra edge cases:
+   • Bài viết không có lỗi (errors = [])
+   • Bài viết rất ngắn (< 150 words)
+   • Bài viết off-topic
+
+3. Fine-tune prompt nếu cần:
+   • Thêm examples cụ thể
+   • Nhấn mạnh format rules
+   • Adjust feedback tone
+
+4. Monitor output quality:
+   • Check explanation có giá trị không
+   • Check startIndex/endIndex accuracy
+   • Check feedback relevance
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  📖 RELATED FILES                                                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+Backend Schema:
+  → backend/src/schemas/submission.schema.ts
+  → backend/src/common/enums/index.ts
+
+Documentation:
+  → backend/AI_OUTPUT_FORMAT.md           (Full spec)
+  → backend/GEMINI_PROMPT_TEMPLATE.txt    (Prompt template)
+
+Testing:
+  → backend/test-ai-output.js             (Validation script)
+
+Future Implementation:
+  → backend/src/ai/utils/transform-ai-output.ts
+  → backend/src/ai/services/gemini-grading.service.ts
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  ✉️  CONTACT & SUPPORT                                               │
+└─────────────────────────────────────────────────────────────────────┘
+
+Questions?
+  → Check AI_OUTPUT_FORMAT.md for detailed explanation
+  → Run test-ai-output.js to validate output
+  → Review GEMINI_PROMPT_TEMPLATE.txt for correct prompting
+
+Version: 1.0
+Last Updated: March 11, 2026
+Project: IELTS Writing E-Learning Platform
